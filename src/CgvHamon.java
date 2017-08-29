@@ -4,13 +4,18 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.printing.PDFPageable;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 
-
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 
@@ -18,13 +23,15 @@ import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.Sides;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import java.util.Iterator;
 
 public class CgvHamon {
-
+	
 	   public static void main(String[] args) throws IOException, PrinterException {
-		   
+		    
 			//1. Create the frame.
 			JFrame frame = new JFrame("Hamon");
 
@@ -40,18 +47,44 @@ public class CgvHamon {
 			frame.pack();
 			frame.setSize(400, 100);
 			frame.setLocationRelativeTo(null);
+			
+			JPanel panel = new JPanel();
+			JLabel label= new JLabel("Transformation en cours...");
+			panel.add(label);
+			frame.add(panel);
 			//5. Show it.
 			frame.setVisible(true);
-			
+
+
 			
 			///config file
 			Properties prop = new Properties();
 			InputStream input = null;
 
 			try {
+				File f = new File("config.ini");
+				if (f.exists() == false) {
+					
+					try {
+						FileWriter fw = new FileWriter("config.ini")  ;
+						PrintWriter pw = new PrintWriter(fw);
 
+						pw.println("nomfichierentree=facture.pdf");
+						pw.println("nomfichiersortie=reportrectoverso.pdf");
+						pw.println("imprimer=true");
+						
+					      
+						pw.close();
+					        	
+					     
+					    } catch (FileNotFoundException e) {
+					      e.printStackTrace();
+					    } catch (IOException e) {
+					      e.printStackTrace();
+					    }  
+				}
 				input = new FileInputStream("config.ini");
-
+				
 				// load a properties file
 				prop.load(input);
 
@@ -59,7 +92,7 @@ public class CgvHamon {
 				System.out.println(prop.getProperty("nomfichierentree"));
 				System.out.println(prop.getProperty("nomfichiersortie"));
 				System.out.println(prop.getProperty("imprimer"));
-				String nomfichierentree = prop.getProperty("nomfichierentree");
+				final String nomfichierentree = prop.getProperty("nomfichierentree");
 				String nomfichiersortie = prop.getProperty("nomfichiersortie");
 				boolean imprimer = Boolean.parseBoolean(prop.getProperty("imprimer"));
 				
@@ -184,18 +217,29 @@ public class CgvHamon {
 		      }
 		      fichiersortie.close();
 		      //fin imprimer ou pas
-	            
+		      //Path from = nomfichiersortie.toPath();
+		      Path patch = Paths.get(dossier + nomfichierentree);
+		      Files.delete(patch);
 		      System.exit(0);
 	           
 		      
 			} 
 			catch (IOException ex) {
+				System.out.println("fichier introuvable");
+				
+				//JPanel panel = new JPanel();
+				label= new JLabel("fichier introuvable");
+				panel.add(label);
+				frame.add(panel);
+				frame.setVisible(true);
+	
 				ex.printStackTrace();
 			} finally {
 				if (input != null) {
 					try {
 						input.close();
 					} catch (IOException e) {
+						
 						e.printStackTrace();
 					}
 				}
